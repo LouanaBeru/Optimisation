@@ -10,7 +10,7 @@ y = [1, 1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ]
 x= [2 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ]
 n = len(y)
 ro0 = 3*10**(-3)
-cadr = 100 #découpe en "card" point [0,1]
+cadr = 1000 #découpe en "card" point [0,1]
 
 
 ####FONCTION UTILE#####
@@ -63,11 +63,7 @@ def gradnor(x):
 
 #### PARAMETRAGE ####
 
-#### POINT DE DEPART ####
-
-x0=random.choices(range(0, cadr + 1), k=n)
-x0 =prolisint(x0,1/cadr)
-
+x0 =[0, 0, 0 ,0 , 0, 0, 0, 0 ,0 ,0]
 eps=0.0000001 #epsilon
 ro = 0.03 #pas de base
 xi = x0
@@ -76,16 +72,16 @@ absy = [0]
 nb = 0
 
 #### RECHERCHE D'UN POINT FIXE ####
-
 for it in range(1, 10000):
-        
-    if ( (f(xi,y)>eps) and (f( sum( xi, prolisint(gradnor(xi),-ro)) , y)  <  f( xi, y))):
-        gx = gx + [f(xi,y)]                     #liste des f(xi)
-        nb = nb + 1                             #compteur
-        absy = absy + [nb*ro]          #liste des absysse
-        xi = sum( xi, prolisint(gradnor(xi),-ro))          #passage à xi+1
+    
+    if ( norme2(gradi(x))*ro != 0) and (f( sum( xi, prolisint(gradnor(xi), -ro) ) , y)  <  f( xi, y)): #On regarde si elle est toujours décroissante
+        if (f( sum( xi, prolisint(gradi(xi), -ro) ) , y)  <  f( xi, y)):
+            gx = gx + [f(xi,y)]                     #liste des f(xi)
+            nb = nb + 1                             #compteur
+            absy = absy + [nb*ro]          #liste des absysse
+            xi = sum( xi, prolisint(gradnor(xi),-ro))          #passage à xi+1
 
- 
+
 
 ####AFFICHAGE####
 print('il y a eu', nb, 'étapes pour arriver à f = zéro qui est pour Xmin =',xi)
