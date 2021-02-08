@@ -12,16 +12,16 @@ nbgrad=100 # Nombre de Graduation sur la courbe
 graduations=list(range(nbgrad)) # Graduation pour l'affichage de la courbe, tout les nombre de 0 a nbgrad
 
 epsilon=0.001
-ndim=50
+ndim=100
 deriveDefinie=False #True si la dérivée de f est définie, False sinon
 dist = [] #distance entre le x actuel et le x_cible
 
 #Définition x_cible
 xCible = np.ones(ndim)
 
-# #Définition A et b_cible
-# A = sp.linalg.hilbert(ndim)
-# bCible = np.matmul(A, xCible)
+#Définition A et b_cible
+A = sp.linalg.hilbert(ndim)
+bCible = np.matmul(A, xCible)
 
 # #Calcul du conditionnement de A
 # cond = np.linalg.cond(A, p =1)
@@ -87,8 +87,8 @@ for igc in [0, 1]:
             xnum=0
             xden=0
             for j in range(ndim):
-                xnum = xnum + gradiant[j] * (gradiant[j] - gradiant0[j])
-                xden = xden + gradiant[j] ** 2
+                xnum = xnum + (gradiant[j]) * (gradiant[j] - gradiant0[j])
+                xden = xden + (gradiant[j]) ** 2
 
             beta=0
             if(xden>1.e-30):
@@ -103,7 +103,7 @@ for igc in [0, 1]:
             x[i] = clamp(x[i], xmin, xmax) # Empeche de dépasser les bornes
 
         if igc == 1:
-            dist.append(func(x) - func(xCible))
+            dist.append(norm2(x-xCible))
 
         f=func(x)
         history[itera]=f
@@ -132,4 +132,4 @@ plt.plot(graduations, dist, label ='Evolution de la distance entre x et x_cible'
 plt.legend()
 plt.show()
 
-print(x)
+print(np.matmul (np.linalg.inv(A), gradiant))
