@@ -44,6 +44,14 @@ def f(x,y): #f(x) = <x,y> exp(-||x||^2)
     f=scal(x,y)*exp(-norme2(x))
     return f
 
+def J(x):
+    J = 0
+    for i in range(n-1):
+        J = J + (x[i]**2 )/ (2(i+1))
+    return J
+
+
+
 #### GRADIENT ####
 def dfdxi(x, y, i): #dérivée partielle dans la i ème coordonnée
     fxi = exp(-norme2(x))*(y[i]-2*x[i]*scal(x,y))
@@ -85,9 +93,12 @@ for it in range(1, 10000):
 
 ####AFFICHAGE####
 print('il y a eu', nb, 'étapes pour arriver à f = zéro qui est pour Xmin =',xi)
-plt.figure()
+plt.figure(1)
 plt.xlabel(u'$Distance parcourue$', fontsize=26)
 plt.ylabel(u'$F(x)$', fontsize=26, rotation=90)
 plt.title(u'F(x) en fonction du chemin descendant')
 plt.plot(absy, gx)
+
+plt.figure(2)
+plt.plot(x, np.log10(abs(f-J)))
 plt.show()
