@@ -22,7 +22,7 @@ for i in temperatureTableau: #a chaque boucle, i vaut la ... ligne du tableau
 # print(donnee[0][0])
 
 ###############################################
-##AFFICHAGE BRUT
+##CREATION DE VECTEURS DONNEES
 
 dates = []
 for i in donnee:
@@ -51,7 +51,26 @@ temperature2 = np.asarray(temperature2)
 # plt.show()
 
 ###############################################
-##MOINDRE CARRE
+##NORMALISATION
+
+temperatureMin1 = np.amin(temperature1)
+temperatureMin2 = np.amin(temperature2)
+temperatureMax1 = np.amax(temperature1)
+temperatureMax2 = np.amax(temperature2)
+dateMin = np.amin(dates)
+dateMax = np.amax(dates)
+
+for k in range(len(temperature1)):
+    temperature1[k] = (temperature1[k] - temperatureMin1) / (temperatureMax1 - temperatureMin1 )
+
+for k in range(len(temperature2)):
+    temperature2[k] = (temperature2[k] - temperatureMin2) / (temperatureMax2 - temperatureMin2 )
+
+for k in range(len(dates)):
+    dates[k] = (dates[k] - dateMin) / (dateMax - dateMin)
+
+###############################################
+##MOINDRE CARRE DE DEGRE 1
 ###DEFINITION MATRICES
 
 X = []
@@ -83,22 +102,58 @@ X2 = np.linalg.solve(A, B2)
 
 ###CONSTRUCTION POLYNOME D APPROXIMATION
 
-P1 = []
-P2 = []
+Droite1 = []
+Droite2 = []
 
 for i in dates:
-    P1.append(X1[1]*i + X1[0])
-    P2.append(X2[1]*i + X2[0])
+    Droite1.append(X1[1]*i + X1[0])
+    Droite2.append(X2[1]*i + X2[0])
 
+
+###AFFICHAGE INTERMEDIAIRE
+
+plt.figure(1)
+plt.scatter(dates, temperature1, c='black')
+plt.plot(dates, Droite1, c = 'red' )
+
+plt.figure(2)
+plt.scatter(dates, temperature2, c='black')
+plt.plot(dates, Droite2, c = 'red' )
+
+###############################################
+##MOINDRE CARRE DE DEGRE 2
+###DEFINITION MATRICES
+
+X = []
+for i in range(len(dates)):
+    X.append([1, dates[i], dates[i]**2 ])
+X = np.asarray(X)
+
+A = om.produitMat(om.transpose(X), X)
+B1 = om.produitMat(om.transpose(X), Y1)
+B2 = om.produitMat(om.transpose(X), Y2)
+
+###RECHERCHE DES COEFFICIENTS
+
+X1 = np.linalg.solve(A, B1)
+
+X2 = np.linalg.solve(A, B2)
+
+###CONSTRUCTION POLYNOME D APPROXIMATION
+
+Polynom1 = []
+Polynom2 = []
+
+for i in dates:
+    Polynom1.append(X1[2] * i**2 + X1[1]*i + X1[0])
+    Polynom2.append(X2[2] * i**2 + X2[1]*i + X2[0])
 
 ###AFFICHAGE FINAL
 
 plt.figure(1)
-plt.scatter(dates, temperature1, c='black')
-plt.plot(dates, P1, c = 'red' )
+plt.plot(dates, Polynom1, c = 'green' )
 
 plt.figure(2)
-plt.scatter(dates, temperature2, c='black')
-plt.plot(dates, P2, c = 'red' )
+plt.plot(dates, Polynom2, c = 'green' )
 
 plt.show()
