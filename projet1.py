@@ -1,11 +1,12 @@
-from math import exp #on importe la fonction exp
+##MODULES
+from math import exp
 from math import sqrt
-import matplotlib.pyplot as plt #module permettant de tracer des courbes
+import matplotlib.pyplot as plt
 import numpy as np
 import random
 from array import array
 
-####PARAMETRAGE####
+##PARAMETRAGE
 y = [1, 1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ]
 x= [2 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ]
 n = len(y)
@@ -13,34 +14,50 @@ ro0 = 3*10**(-3)
 cadr = 1000 #découpe en "card" point [0,1]
 
 
-####FONCTION UTILE#####
-def prolisint(x,a): #produit entre une liste et un nombre
+##FONCTIONS UTILES
+
+#Fonction : prolisint
+#Parametres : l : list, a : int
+#Retourne : l * a
+def prolisint(l,a):
     pro=[]
     for i in range(0, n):
-        pro = pro + [x[i]*a]
+        pro = pro + [l[i]*a]
     return pro
 
-def sum(x,y):  #Somme entre deux listes
+#Fonction : sum
+#Parametres : x : list, y : list
+#Retourne : x + y
+def sum(x,y):
     som = []
     for i in range(0, n):
         som = som + [x[i] + y[i]]
     return som
 
-####FONCTION POUR DEFINIR f(x)#####
-def scal(x, y): #produit de scalaire de x,y
+##AUTRES FONCTIONS
+
+#Fonction : scal
+#Parametres : x : list, y : list
+#Retourne : < x ; y > 
+def scal(x, y):
     sxy = 0
     for i in range(0,n):
         sxy = sxy + x[i] * y[i]
     return sxy
 
-def norme2(x): #norme au carré
+#Fonction : norme2
+#Parametres : x : list
+#Retourne : (||x||_2) ** 2
+def norme2(x):
     n2=0
     for i in range(0, n):
        n2 = n2 + x[i]**2 
     return n2
 
-#### DEFINITION DE f(x) #####
-def f(x,y): #f(x) = <x,y> exp(-||x||^2)
+##DEFINITION DE f(x)
+
+#f(x) = <x,y> exp(-||x||^2)
+def f(x,y):
     f=scal(x,y)*exp(-norme2(x))
     return f
 
@@ -52,25 +69,35 @@ def J(x):
 
 
 
-#### GRADIENT ####
-def dfdxi(x, y, i): #dérivée partielle dans la i ème coordonnée
+##GRADIENT
+
+#Fonction : dfdxi
+#Parametres : x : list, y : list, i : int
+#Renvoie : la derivee partielle de f suivant x[i]
+def dfdxi(x, y, i):
     fxi = exp(-norme2(x))*(y[i]-2*x[i]*scal(x,y))
     return fxi
 
-def gradi(x): #gradient
+#Fonction : gradi
+#Parametres : x : list
+#Renvoie : grad(f)
+def gradi(x):
     grad=[] 
     for j in range(0, n):
         grad=grad+[dfdxi(x,y,j)]
     return grad
 
-#### NORMALISATION DU GRADIENT ####
+##NORMALISATION DU GRADIENT
 
+#Fonction : gradnor
+#Parametres : x : list
+#Retourne : la gradient de f normalise
 def gradnor(x):
-    gradnorm = prolisint(  gradi(x)  ,  1 / sqrt( norme2(gradi(x))))  ###division du gradient par ça norme
+    gradnorm = prolisint(  gradi(x)  ,  1 / sqrt( norme2(gradi(x))))
     return(gradnorm)
 
-#### PARAMETRAGE ####
-
+#############################################################################################
+##PARAMETRAGE
 x0 =[0, 0, 0 ,0 , 0, 0, 0, 0 ,0 ,0]
 eps=0.0000001 #epsilon
 ro = 0.03 #pas de base
@@ -79,7 +106,7 @@ gx = [f(x0,y)]
 absy = [0]
 nb = 0
 
-#### RECHERCHE D'UN POINT FIXE ####
+##RECHERCHE D'UN POINT FIXE
 for it in range(1, 10000):
     
     if ( norme2(gradi(x))*ro != 0) and (f( sum( xi, prolisint(gradnor(xi), -ro) ) , y)  <  f( xi, y)): #On regarde si elle est toujours décroissante
@@ -90,8 +117,8 @@ for it in range(1, 10000):
             xi = sum( xi, prolisint(gradnor(xi),-ro))          #passage à xi+1
 
 
-
-####AFFICHAGE####
+#############################################################################################
+##AFFICHAGE
 print('il y a eu', nb, 'étapes pour arriver à f = zéro qui est pour Xmin =',xi)
 plt.figure(1)
 plt.xlabel(u'$Distance parcourue$', fontsize=26)
@@ -102,3 +129,4 @@ plt.plot(absy, gx)
 plt.figure(2)
 plt.plot(x, np.log10(abs(f-J)))
 plt.show()
+
