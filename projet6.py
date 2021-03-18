@@ -1,3 +1,10 @@
+##MODULES
+#import operations_Matricielles as om
+#import operations_Vectorielles as ov
+from scipy import optimize
+import numpy as np
+from math import sqrt
+
 ##VARIATIONS SUR 1 AN TOUT LES ~18 DU MOIS, VALEUR DE L ACTION A LA CLOTURE
 ###L OREAL
 O = [228.6, 256.8, 253.6, 278.7, 290.7, 281.4, 280.8, 295, 317.4, 306.6, 298.7, 319.1, 326.4]
@@ -20,6 +27,13 @@ def moy(x):
         m+=x[i]
     return m/len(x)
 
+# ###Evaluation des moyennes
+# moyO = moy(O)
+# moyR = moy(R)
+# moyM = moy(M)
+
+# print(moyO, moyR, moyM)
+
 
 #Fonction : var
 #Parametres : x :list
@@ -29,7 +43,14 @@ def var(x):
     moyX = moy(x)
     for i in x:
         variance += (i - moyX)**2
-    return variance
+    return variance / len(x)
+
+###Evaluation des variances
+varO = var(O)
+varR = var(R)
+varM = var(M)
+
+# print(varO, varR, varM)
 
 
 #Fonction : sigma
@@ -53,48 +74,71 @@ def cov(x,y):
     else :
         print("Les variables ne sont pas de mêmes dimensions")
 
-revenus=[.,.,.]
-revObj=.
+###Evaluation des covariances
+covOR = cov(O,R)
+covOM = cov(O,M)
+covMR = cov(M,R)
+
+# print(covOR, covOM, covMR)
+
+revenus=[2,1.5,1]
+revObj= 1.7
 
 
 ##METHODE zero_vect_fun
 
-#J(x) = 1/2 * < Ax ; x >
+#J(x) = 1/2 * < Ax ; x > fonction de risque
 #E1 = x[0]+x[1]+x[2]-1
 #E2 = x[0]*r[0] +x[1]*r[1] +x[2]*r[2]-R
 #x = (proportion investie dans l'Oreal, prop. invest dans Renault, prop. invest dans Michelin)
 #On cherche le x qui minimise J
 
 ###Construction de J
-####Construction de A
-A = []
-for i in x:
-    aij = []
-    for j in x:
-        if i == j:
-            aij.append(i**2 * var(i))
-        else:
-            aij.append(i * j * cov(i,j))
-        A.append([aij])
+# ####Construction de A
+# A = []
+# for i in x:
+#     aij = []
+#     for j in x:
+#         if i == j:
+#             aij.append(i**2 * var(i))
+#         else:
+#             aij.append(i * j * cov(i,j))
+#         A.append(aij)
 
+# def J(x):
+#     evaluation = 1 / 2 * ov.scal( om.produitMat(A,x), x)
+#     return evaluation
 
 
 def fun(x):
-    return [(x[0]*cov(O,O) + x[1]*cov(O,R) + x[2]*cov(O,M))/2 + x[3] + x[4],
-            (x[0]*cov(R,O) + x[1]*cov(R,R) + x[2]*cov(R,M))/2 + x[3] + x[4],
-            (x[0]*cov(M,O) + x[1]*cov(M,R) + x[2]*cov(M,M))/2 + x[3] + x[4],
+    return [x[0]*varO + (x[1] * covOR + x[2] * covOM)/2 + x[3] + x[4],
+            (x[0] * covOR)/2 + x[1] * varR + (x[2] * covMR)/2 + x[3] + x[4],
+            (x[0] * covOM)/2 + (x[1] * covMR)/2 + x[2] * varM + x[3] + x[4],
             x[0]+x[1]+x[2]-1,
             x[0]*revenus[0] +x[1]*revenus[1] +x[2]*revenus[2]-revObj
             ]
 
 def jacobian(x):
-    return np.array([[cov(O,O) , cov(O,R) ,  cov(O,M) , 1, 1],
-                     [cov(R,O) , cov(R,R) ,  cov(R,M) , 1, 1],
-                     [cov(M,O) , cov(M,R) ,  cov(M,M) , 1, 1],
+    return np.array([[varO , covOR/2 , covOM/2 , 1, 1],
+                     [covOR/2 , varR , covMR/2 , 1, 1],
+                     [covOM/2 , covMR/2 , varM , 1, 1],
                      [ 1 , 1 ,  1 , 0, 0],
                      [ revenus[0] , revenus[1] ,  revenus[2] , 0, 0]                     
                      ])
-                     
+
+sol = optimize.root(fun,[0.5, 0.4, 0.1, 0, 0], jac=jacobian)
+print('with jacobian=',sol.x)
+x=sol.x
+print('E1(x) constraint=',x[0]  + x[1] + x[2] - 1)
+print('E2(x) constraint=',x[0]*revenus[0] +x[1]*revenus[1] +x[2]*revenus[2]-revObj)
+
+print('---------------------------------------------------------')
+sol = optimize.root(fun,[0.5, 0.4, 0.1, 0, 0], method='broyden1')
+print('broyden1 =',sol.x)
+x=sol.x
+print('E1(x) constraint=',x[0]  + x[1] + x[2] - 1)
+print('E2(x) constraint=',x[0]*revenus[0] + x[1]*revenus[1] +x[2]*revenus[2]-revObj)
+
 ##OBJECTIFS
 #R = revObj = le revenu qu'on souhaite obtenir = revenu objectif
 #ri = revenus[i-1] = le revenu du i-eme actif
