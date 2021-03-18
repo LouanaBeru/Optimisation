@@ -58,18 +58,6 @@ print('sensibility of J wrt E',(J-Jopt)/(0.001),x[3])
 
 #idem ex.12. et avec 2 contraintes
 
-
-
-
-
-
-
-
-
-
-
-
-
 #def fun(x):
 #    return [x[0]  + 0.5 * (x[0] - x[1])**3 - 1.0,
 #            0.5 * (x[1] - x[0])**3 + x[1]]
