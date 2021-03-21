@@ -5,6 +5,11 @@ from scipy import optimize
 import numpy as np
 from math import sqrt
 
+##CONDITIONS INITIALES
+argentDepart = 1000 #argent investi au depart ( en K euros )
+nActions = 3 #nbr d'actions
+revObj = 1001 #revenu objectif ( en K euros )
+
 ##VARIATIONS SUR 1 AN TOUT LES ~18 DU MOIS, VALEUR DE L ACTION A LA CLOTURE
 ###L OREAL
 O = [228.6, 256.8, 253.6, 278.7, 290.7, 281.4, 280.8, 295, 317.4, 306.6, 298.7, 319.1, 326.4]
@@ -27,13 +32,12 @@ def moy(x):
         m+=x[i]
     return m/len(x)
 
-# ###Evaluation des moyennes
-# moyO = moy(O)
-# moyR = moy(R)
-# moyM = moy(M)
+###Evaluation des moyennes
+moyO = moy(O)
+moyR = moy(R)
+moyM = moy(M)
 
 # print(moyO, moyR, moyM)
-
 
 #Fonction : var
 #Parametres : x :list
@@ -51,7 +55,6 @@ varR = var(R)
 varM = var(M)
 
 # print(varO, varR, varM)
-
 
 #Fonction : sigma
 #Parametres : x :list
@@ -81,9 +84,32 @@ covMR = cov(M,R)
 
 # print(covOR, covOM, covMR)
 
-revenus=[2,1.5,1]
-revObj= 1.7
+###Rendement des actions
 
+#Fonction : rendAction
+#Parametres : X : list / cours de l'action
+#Retourne : le rendement d'une action
+
+def rendAction(X):
+    if X[0] != 0:
+        rendement = X[-1] / X[0]
+    else:
+        rendement = X[-1]
+    return rendement 
+
+####L'OREAL
+rendO = rendAction(O)
+
+####RENAULT
+rendR = rendAction(R)
+
+####MICHELIN
+rendM = rendAction(M)
+
+#Vecteur rendement des actions
+
+rendActions = [rendO, rendR, rendM]
+print(rendActions)
 
 ##METHODE zero_vect_fun
 
@@ -92,6 +118,37 @@ revObj= 1.7
 #E2 = x[0]*r[0] +x[1]*r[1] +x[2]*r[2]-R
 #x = (proportion investie dans l'Oreal, prop. invest dans Renault, prop. invest dans Michelin)
 #On cherche le x qui minimise J
+
+def fun(x):
+    return [x[0]*varO + (x[1] * covOR + x[2] * covOM)/2 + x[3] + x[4],
+            (x[0] * covOR)/2 + x[1] * varR + (x[2] * covMR)/2 + x[3] + x[4],
+            (x[0] * covOM)/2 + (x[1] * covMR)/2 + x[2] * varM + x[3] + x[4],
+            x[0]+x[1]+x[2]-1,
+            x[0]*rendActions[0] +x[1]*rendActions[1] +x[2]*rendActions[2]-revObj
+            ]
+
+def jacobian(x):
+    return np.array([[varO , covOR/2 , covOM/2 , 1, 1],
+                     [covOR/2 , varR , covMR/2 , 1, 1],
+                     [covOM/2 , covMR/2 , varM , 1, 1],
+                     [ 1 , 1 ,  1 , 0, 0],
+                     [rendActions[0] , rendActions[1] ,  rendActions[2] , 0, 0]                     
+                     ])
+
+sol = optimize.root(fun,[1, 0, 0, 0, 0], jac=jacobian)
+propInvestie = sol.x
+print('with jacobian=',propInvestie)
+print('E1(x) constraint=',propInvestie[0]  + propInvestie[1] + propInvestie[2] - 1)
+print('E2(x) constraint=',propInvestie[0]*rendActions[0] + propInvestie[1]*rendActions[1] + propInvestie[2]*rendActions[2]-revObj)
+
+print('---------------------------------------------------------')
+
+sol = optimize.root(fun,[1, 0, 0, 0, 0], method='broyden1')
+propInvestie=sol.x
+print('broyden1 =',propInvestie)
+print(propInvestie)
+print('E1(x) constraint=',propInvestie[0]  + propInvestie[1] + propInvestie[2] - 1)
+print('E2(x) constraint=',propInvestie[0]*rendActions[0] + propInvestie[1]*rendActions[1] +propInvestie[2]*rendActions[2]-revObj)
 
 ###Construction de J
 # ####Construction de A
@@ -109,41 +166,19 @@ revObj= 1.7
 #     evaluation = 1 / 2 * ov.scal( om.produitMat(A,x), x)
 #     return evaluation
 
+##RENDEMENT DU PORTEFEUILLE
 
-def fun(x):
-    return [x[0]*varO + (x[1] * covOR + x[2] * covOM)/2 + x[3] + x[4],
-            (x[0] * covOR)/2 + x[1] * varR + (x[2] * covMR)/2 + x[3] + x[4],
-            (x[0] * covOM)/2 + (x[1] * covMR)/2 + x[2] * varM + x[3] + x[4],
-            x[0]+x[1]+x[2]-1,
-            x[0]*revenus[0] +x[1]*revenus[1] +x[2]*revenus[2]-revObj
-            ]
+#Fonction : rendPortefeuille
+#Parametres : n : int / nbr d'actions, p : list / proportions investies dans chaque action, r : list / rendement de chaque action
+#Retourne : le rendement du portefeuille
+def rendPortefeuille(N, p, r):
+    rPortefeuille = 0
+    for i in N:
+        rPortefeuille += p[i] * r[i]
+    return rPortefeuille
 
-def jacobian(x):
-    return np.array([[varO , covOR/2 , covOM/2 , 1, 1],
-                     [covOR/2 , varR , covMR/2 , 1, 1],
-                     [covOM/2 , covMR/2 , varM , 1, 1],
-                     [ 1 , 1 ,  1 , 0, 0],
-                     [ revenus[0] , revenus[1] ,  revenus[2] , 0, 0]                     
-                     ])
-
-sol = optimize.root(fun,[0.5, 0.4, 0.1, 0, 0], jac=jacobian)
-print('with jacobian=',sol.x)
-x=sol.x
-print('E1(x) constraint=',x[0]  + x[1] + x[2] - 1)
-print('E2(x) constraint=',x[0]*revenus[0] +x[1]*revenus[1] +x[2]*revenus[2]-revObj)
-
-print('---------------------------------------------------------')
-sol = optimize.root(fun,[0.5, 0.4, 0.1, 0, 0], method='broyden1')
-print('broyden1 =',sol.x)
-x=sol.x
-print('E1(x) constraint=',x[0]  + x[1] + x[2] - 1)
-print('E2(x) constraint=',x[0]*revenus[0] + x[1]*revenus[1] +x[2]*revenus[2]-revObj)
 
 ##OBJECTIFS
-#R = revObj = le revenu qu'on souhaite obtenir = revenu objectif
-#ri = revenus[i-1] = le revenu du i-eme actif
-# -> Vérifier les matrices et appliquer zero_vect_fun
-
 #Methode primal-dual
 
 #Methode Uzawa
