@@ -1,6 +1,6 @@
 ##README
-#This code uses operations_Matricielles, available on our website
-#Please make sure to save those two in the same directory before running projet6
+#This code uses operations_Matricielles and operations_Vectorielles, available on our website
+#Please make sure to save those three in the same directory before running projet6
 
 ##MODULES
 import operations_Matricielles as om
