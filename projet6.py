@@ -1,6 +1,10 @@
+##README
+#This code uses operations_Matricielles, available on our website
+#Please make sure to save those two in the same directory before running projet6
+
 ##MODULES
-#import operations_Matricielles as om
-#import operations_Vectorielles as ov
+import operations_Matricielles as om
+import operations_Vectorielles as ov
 from scipy import optimize
 import numpy as np
 from math import sqrt
@@ -20,6 +24,7 @@ R = [16.478, 17.028, 18.998, 22.335, 24.14, 24.685, 23.585, 24.165, 31.48, 37.12
 ###MICHELIN
 M = [75.06, 90.48, 88.6, 91.5, 94.62, 96.8, 96.14, 95.1, 108.6, 109.6, 109.35, 117.95, 127.05]
 
+vectActions = [O, R, M]
 
 ##FONCTIONS UTILES
 
@@ -75,7 +80,7 @@ def cov(x,y):
             covar += (x[i] - X) * (y[i] - Y)
         return covar / len(x)
     else :
-        print("Les variables ne sont pas de mêmes dimensions")
+        print('Les variables ne sont pas de memes dimensions')
 
 ###Evaluation des covariances
 covOR = cov(O,R)
@@ -89,7 +94,6 @@ covMR = cov(M,R)
 #Fonction : rendAction
 #Parametres : X : list / cours de l'action
 #Retourne : le rendement d'une action
-
 def rendAction(X):
     if X[0] != 0:
         rendement = X[-1] / X[0]
@@ -107,15 +111,14 @@ rendR = rendAction(R)
 rendM = rendAction(M)
 
 #Vecteur rendement des actions
-
 rendActions = [rendO, rendR, rendM]
 print(rendActions)
 
 ##METHODE zero_vect_fun
 
 #J(x) = 1/2 * < Ax ; x > fonction de risque
-#E1 = x[0]+x[1]+x[2]-1
-#E2 = x[0]*r[0] +x[1]*r[1] +x[2]*r[2]-R
+#E1 = x[0] + x[1] + x[2] - 1
+#E2 = x[0] * r[0] + x[1] * r[1] + x[2] * r[2] - R
 #x = (proportion investie dans l'Oreal, prop. invest dans Renault, prop. invest dans Michelin)
 #On cherche le x qui minimise J
 
@@ -136,35 +139,57 @@ def jacobian(x):
                      ])
 
 sol = optimize.root(fun,[1, 0, 0, 0, 0], jac=jacobian)
-propInvestie = sol.x
-print('with jacobian=',propInvestie)
-print('E1(x) constraint=',propInvestie[0]  + propInvestie[1] + propInvestie[2] - 1)
-print('E2(x) constraint=',propInvestie[0]*rendActions[0] + propInvestie[1]*rendActions[1] + propInvestie[2]*rendActions[2]-revObj)
+propInvestieZero1 = sol.x
+print('with jacobian=',propInvestieZero1)
+print('E1(x) constraint=',propInvestieZero1[0]  + propInvestieZero1[1] + propInvestieZero1[2] - 1)
+print('E2(x) constraint=',propInvestieZero1[0]*rendActions[0] + propInvestieZero1[1]*rendActions[1] + propInvestieZero1[2]*rendActions[2]-revObj)
 
 print('---------------------------------------------------------')
 
 sol = optimize.root(fun,[1, 0, 0, 0, 0], method='broyden1')
-propInvestie=sol.x
-print('broyden1 =',propInvestie)
-print(propInvestie)
-print('E1(x) constraint=',propInvestie[0]  + propInvestie[1] + propInvestie[2] - 1)
-print('E2(x) constraint=',propInvestie[0]*rendActions[0] + propInvestie[1]*rendActions[1] +propInvestie[2]*rendActions[2]-revObj)
+propInvestieZero2 = sol.x
+print('broyden1 =',propInvestieZero2)
+print('E1(x) constraint=',propInvestieZero2[0]  + propInvestieZero2[1] + propInvestieZero2[2] - 1)
+print('E2(x) constraint=',propInvestieZero2[0]*rendActions[0] + propInvestieZero2[1]*rendActions[1] +propInvestieZero2[2]*rendActions[2]-revObj)
 
-###Construction de J
-# ####Construction de A
-# A = []
-# for i in x:
-#     aij = []
-#     for j in x:
-#         if i == j:
-#             aij.append(i**2 * var(i))
-#         else:
-#             aij.append(i * j * cov(i,j))
-#         A.append(aij)
+##METHODE primal-dual
+##Construction de J
+####Construction de A
+A = [[varO, covOR, covOM],
+    [covOR, varR, covMR],
+    [covOM, covMR, varM]]
 
-# def J(x):
-#     evaluation = 1 / 2 * ov.scal( om.produitMat(A,x), x)
-#     return evaluation
+def J(x):
+    evaluation = 1 / 2 * ov.scal( om.produitMat(A,x), x)
+    return evaluation
+
+B = ([[1 , 1, 1],
+    [rendO, rendR, rendM]])
+
+c = ([[ 1 ],
+    [ revObj ]])
+
+invA = om.inverse(A)
+transB = om.transpose(B)
+
+def H(p):
+    xPrime = invA * transB * p
+    evaluation = 1 / 2 * ov.scal( om.produitMat(A ,invA * xPrime), xPrime) + ov.scal(p, om.produitMat(B, xPrime) - c)
+    return evaluation
+
+#On resoud une equation du type AX = B avec A = -BA^(-1)B^T et B = c
+produit1 = om.produitMat(invA, transB)
+Atemp = om.produitMat(om.produitMatNbr(-1, B), produit1)
+p = np.linalg.solve( Atemp , c)
+
+x = om.produitMat(invA,om.produitMat(transB, p))
+
+propInvestiePrimal = x
+
+print('propInvestiePrimal', propInvestiePrimal)
+
+##METHODE UZAWA
+
 
 ##RENDEMENT DU PORTEFEUILLE
 
