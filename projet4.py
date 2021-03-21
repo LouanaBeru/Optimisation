@@ -1,11 +1,15 @@
+##README
+#This code uses operations_Matricielles available on our website
+#Please make sure to save those two codes in the same directory before running projet4
+
+###############################################
+##MODULES
 import matplotlib.pyplot as plt
 import numpy as np
 import operations_Matricielles as om
 
-
 ###############################################
 ##EXCTRACTION DES DONNEES DE TEMPERATURE.TXT
-
 temperature = open ('temperature.txt', 'r') #va chercher le dossier, D:/Users/Chapati/Documents/Fac/S6/Optimisation/VSCODE_OPTI/semaine 4/ si c'etait pas au même endroit
 temperatureTableau = temperature.read().split('\n') #renvoie un tableau dont chaque element est une ligne du fichier
 temperature.close() #ferme le fichier
@@ -111,7 +115,6 @@ for i in dates:
 
 
 ###AFFICHAGE INTERMEDIAIRE
-
 plt.figure(1)
 plt.scatter(dates, temperature1, c='black')
 plt.plot(dates, Droite1, c = 'red' )
@@ -134,13 +137,10 @@ B1 = om.produitMat(om.transpose(X), Y1)
 B2 = om.produitMat(om.transpose(X), Y2)
 
 ###RECHERCHE DES COEFFICIENTS
-
 X1 = np.linalg.solve(A, B1)
-
 X2 = np.linalg.solve(A, B2)
 
 ###CONSTRUCTION POLYNOME D APPROXIMATION
-
 Polynom1 = []
 Polynom2 = []
 
@@ -149,7 +149,6 @@ for i in dates:
     Polynom2.append(X2[2] * i**2 + X2[1]*i + X2[0])
 
 ###AFFICHAGE FINAL
-
 plt.figure(1)
 plt.plot(dates, Polynom1, c = 'green' )
 
