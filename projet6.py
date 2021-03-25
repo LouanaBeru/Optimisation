@@ -116,7 +116,7 @@ rendM = rendAction(M)
 
 #Vecteur rendement des actions
 rendActions = [rendO, rendR, rendM]
-print(rendActions)
+print('rendActions = ', rendActions)
 
 ##METHODE zero_vect_fun
 
@@ -144,7 +144,10 @@ def jacobian(x):
                      ])
 
 sol = sp.optimize.root(fun,[1, 0, 0, 0, 0], jac=jacobian)
-propInvestieZero1 = sol.x
+for i in range(nActions):
+    x1 = np.zeros(nActions)
+    x1[i] = max(sol.x[i], 0)
+propInvestieZero1 = x1
 print('with jacobian=',propInvestieZero1)
 print('E1(x) constraint=',propInvestieZero1[0]  + propInvestieZero1[1] + propInvestieZero1[2] - 1)
 print('E2(x) constraint=',propInvestieZero1[0]*rendActions[0] + propInvestieZero1[1]*rendActions[1] + propInvestieZero1[2]*rendActions[2]-revObj)
@@ -152,7 +155,10 @@ print('E2(x) constraint=',propInvestieZero1[0]*rendActions[0] + propInvestieZero
 print('---------------------------------------------------------')
 
 sol = sp.optimize.root(fun,[1, 0, 0, 0, 0], method='broyden1')
-propInvestieZero2 = sol.x
+for i in range(nActions):
+    x1 = np.zeros(nActions)
+    x1[i] = max(sol.x[i], 0)
+propInvestieZero2 = x1
 print('broyden1 =',propInvestieZero2)
 print('E1(x) constraint=',propInvestieZero2[0]  + propInvestieZero2[1] + propInvestieZero2[2] - 1)
 print('E2(x) constraint=',propInvestieZero2[0]*rendActions[0] + propInvestieZero2[1]*rendActions[1] +propInvestieZero2[2]*rendActions[2]-revObj)
@@ -186,15 +192,17 @@ def H(p):
 Atemp = om.produitMat(om.produitMatNbr(-1, B), om.produitMat(invA, transB))
 p = np.linalg.solve( Atemp , c)
 print('p = ', p)
-x2 = om.produitMat(invA,om.produitMat(transB, p))
+x = om.produitMat(invA,om.produitMat(transB, p))
+
+for i in range(nActions):
+    x2 = np.zeros(nActions)
+    x2[i] = max(x[i], 0)
 
 propInvestiePrimal = x2
 
 print('propInvestiePrimal', propInvestiePrimal)
 
 ##METHODE UZAWA
-
-#
 ###########################################
 def func(ndim, x):
     alp1=0.
@@ -204,6 +212,7 @@ def func(ndim, x):
     print('A =', A)
     print('Ax =',om.produitMat(A,x))
     cost = 0.5 * ov.scal( om.produitMat(A,x), x)
+    # print('cost = ', cost)
     cons1 = x[0]+x[1]+x[2]-1
     cons2 = x[0]*rendActions[0] +x[1]*rendActions[1] +x[2]*rendActions[2]-revObj
     cons3 = x[0]*x[1] / x[0]*x[1] - x[1]*x[2] / x[1]*x[2]
@@ -222,7 +231,7 @@ def funcp(ndim, x):
 nbgrad=10000
 eps=1.e-6
 epsdf=0.001
-ndim=6
+ndim=5
 idf=0
 ro0=0.01
 
@@ -257,7 +266,7 @@ for igc in [0]:
         if(idf==1):
             for i in range(0, ndim):
                 x[i]=x[i]+epsdf
-                fp=func(ndim, x)
+                fp=func(ndim, x3)
                 x[i]=x[i]-2*epsdf
                 fm=func(ndim, x)
                 x[i]=x[i]+epsdf
@@ -291,7 +300,7 @@ for igc in [0]:
             x[i]=x[i]+ro*d[i]
             x[i]=max(min(x[i], xmax[i]), xmin[i])
             
-        f=func(ndim, x)
+        f=func(ndim, [x[0], x[1], x[2]] )
         history[itera]=f
         historyg[itera]=gg
         g1=dfdx[0]
@@ -327,22 +336,26 @@ for igc in [0]:
         history[iter]=history[iter]/h1
         historyg[iter]=historyg[iter]/hg1
 
-    print("igc=",igc)
-    if igc==0:
-        plt.plot(it[:itera],history[:itera], color='red', label='GD')
-    if igc==1:
-        plt.plot(it[:itera],history[:itera], color='green',label='CG')
+    # print("igc=",igc)
+    # if igc==0:
+    #     plt.plot(it[:itera],history[:itera], color='red', label='GD')
+    # if igc==1:
+    #     plt.plot(it[:itera],history[:itera], color='green',label='CG')
 
+for i in range(3):
+    x3 = np.zeros(nActions)
+    x3[i] = max(x[i] , 0)
+
+propInvestieUzawa = x3
 print('iterations=',itera)
 print('convergence criteria=',crit)
-print('uzawa (x,p)=',x)
+print('uzawa (x,p)=', x3)
 print('target(x,p)= [0.16754469  0.55409219 -0.325321   -0.10518421]')
-print(x[0]+x[1]+x[2]-1)
-print(x[0]*rendActions[0] +x[1]*rendActions[1] +x[2]*rendActions[2]-revObj)
-print(x[0]*x[1] / x[0]*x[1] - x[1]*x[2] / x[1]*x[2])
-
-plt.legend()
-plt.show()
+print(x3[0]+x3[1]+x3[2]-1)
+print(x3[0]*rendActions[0] +x3[1]*rendActions[1] +x3[2]*rendActions[2]-revObj)
+# print(x[0]*x[1] / x[0]*x[1] - x[1]*x[2] / x[1]*x[2])
+# plt.legend()
+# plt.show()
 
 ##RENDEMENT DU PORTEFEUILLE
 
@@ -351,6 +364,11 @@ plt.show()
 #Retourne : le rendement du portefeuille
 def rendPortefeuille(N, p, r):
     rPortefeuille = 0
-    for i in N:
+    for i in range(N):
         rPortefeuille += p[i] * r[i]
     return rPortefeuille
+
+propInvestie = [propInvestieZero2, propInvestiePrimal, propInvestieUzawa]
+rendement = rendPortefeuille(nActions, propInvestie, rendActions )
+
+print('rendement = ',rendement)
