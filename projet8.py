@@ -10,7 +10,6 @@ import numpy as np
 #3x1 + 2x2 + 4x3 \leq 42
 #3x1 +2x2 \leq 30
 #0 \leq x1, 0 \leq x2, 0 \leq x3
-
 A = np.mat([
     [ 1, -1, 1, 20],
     [3, 2, 4, 42],
@@ -18,9 +17,10 @@ A = np.mat([
     [-5, -4, -6, 1]
 ])
 
+linesA = np.shape(A)[0]
+
 ###TURN INTO A MAXIMIZATION PROBLEM
 AT = A.transpose()
-print(AT)
 linesAT = np.shape(AT)[0]
 columnsAT = np.shape(AT)[1]
 
@@ -63,49 +63,84 @@ for i in range(linesB):
     if i == linesB-1:
         for j in range(columnsAT-1):
             B.itemset((i, j), -AT.item(i,j))
-        B.itemset((i, columnsB-2), 1)        
+        B.itemset((i, columnsB-2), 1)   
+print('#####################')   
+print('MAXIMIZATION PROBLEM')  
+print('B=')
 print(B)
+print('#####################')
+print('DIAGONALIZATION')
 
-###SOLVING
+###DIAGONALAZING
 
-entrant = []
-for j in range(columnsAT-1):
-    entrant.append(B.item(linesB-1, j))
+for tour in range(linesA-1):
+    #Checks the minimum value on the last line of B between the columns 0 and columnsAT-2
+    entrant = []
+    for j in range(columnsAT-1):
+        entrant.append(B.item(linesB-1, j))
 
-entrant = np.asarray(entrant)
-minimum = min(entrant)
+    entrant = np.asarray(entrant)
+    minimum = min(entrant)
+    print('minimum on the last line:',minimum)
 
-for i in range(len(entrant)):
-    if entrant[i] == minimum:
-        rangMinEntrant = i
+    #Gives his column
+    for i in range(len(entrant)):
+        if entrant[i] == minimum:
+            rangMinEntrant = i
+            i = len(entrant)
+    print('is at the column number:',rangMinEntrant)
 
-sortant = []
-for i in range(linesAT-1):
-    sortant.append(B.item(i,columnsB-1)/B.item(i, 0))
+    #Checks the minimum value on the last column of B between the lines 0 and linesB-1
+    sortant = []
+    for i in range(linesAT-1):
+        if B.item(i, rangMinEntrant) != 0:
+            sortant.append(B.item(i,columnsB-1)/B.item(i, rangMinEntrant))
+        else:
+            sortant.append(B.item(i,columnsB-1))
 
-minimum = min(sortant)
+    sortant = np.asarray(sortant)
+    minimum = min(sortant)
+    print('minimum on the last column:',minimum)
 
-for i in range(len(sortant)):
-    if sortant[i] == minimum:
-        rangMinSortant = i
+    #Gives his line
+    for i in range(len(sortant)):
+        if sortant[i] == minimum:
+            rangMinSortant = i
+            i = len(sortant)
+    print('is at the line number:',rangMinSortant)
 
-###Si on diagonalise A|I, on obtient D|P
+##Operating on lines
+    print('#####################')
+    print('OPERATING ON LINES')
+    #if the pivot is zero, the program has to stop
+    if B.item(rangMinSortant, rangMinEntrant) == 0:
+        tour = linesA
+    else:
+        print('pivot is B[',rangMinSortant,'][', rangMinEntrant,']=',
+        B.item(rangMinSortant,rangMinEntrant))
+        print()
+        for i in range(linesB):
+            if i != rangMinSortant: #Changes every lines except the pivot's line
+                coeff = B.item(i,rangMinEntrant) #We have to copy it,
+                #because after 1 loop it will be changed as 0
+                #Li become Li - B[i][pivot's column] / pivot * L_of_the_pivot
+                for j in range(columnsB): #Goes through every column
+                    B.itemset((i, j), B.item(i,j) 
+                    - coeff/B.item(rangMinSortant, rangMinEntrant) 
+                    * B.item(rangMinSortant, j) )
+                print('#####################')
+                print('L', i, 'devient L', i, 
+                '- B[', i, '][', rangMinEntrant, ']/B[', rangMinSortant, '][', rangMinEntrant, 
+                '] * L', rangMinSortant)
+                print('B=')
+                print(B)
+print('end')
+print('B=')
+print(B)
+#Can find the final answer on the last line of B
+print('Final solution is :')
+print('x0 =', B.item(linesB-1, columnsB - 5),
+ '; x1 =', B.item(linesB-1, columnsB - 4 ),
+  '; x2 =', B.item(linesB-1, columnsB - 3), '; J =',
+   B.item(linesB-1, columnsB -1))
 
-
-
-
-
-
-
-
-
-
-
-
-
-# B = np.mat([
-#     [-AT[-1][1], -AT[-1][2], AT[-1][3], AT[-1][4], 0],
-#     [AT[1][1], AT[1][2], AT[1][3], 1, -5],
-#     [AT[2][1], AT[2][2], AT[2][3], 1, -4],
-#     [AT[3][1], AT[3][2], AT[3][3], 1, -6]
-# ])
